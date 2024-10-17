@@ -1,0 +1,66 @@
+---
+- name: Add borg sudo
+  ansible.builtin.shell: usermod -aG sudo borg
+  tags:
+    - client
+
+
+- name: Gen sert
+  ansible.builtin.shell: ssh-keygen -N '' -f /home/borg/.ssh/id_rsa
+  become: true
+  become_user: borg
+  tags:
+    - client
+
+- name: Gen sert root
+  ansible.builtin.shell: ssh-keygen -N '' -f /root/.ssh/id_rsa
+  tags:
+    - client
+
+
+- name: Export pass root
+  ansible.builtin.shell: sshpass -p borg ssh-copy-id -o StrictHostKeyChecking=no  borg@192.168.56.12
+  tags:
+    - client
+
+
+- name: Export pass
+  ansible.builtin.shell: sshpass -p borg ssh-copy-id -o StrictHostKeyChecking=no  borg@192.168.56.12
+  become: true
+  become_user: borg
+  tags:
+    - client
+
+- name: Init repo
+  ansible.builtin.shell: export BORG_PASSPHRASE=borg && borg init --encryption=repokey borg@192.168.56.12:/var/backup/client
+  become: true
+  become_user: borg
+  tags:
+    - client
+
+- name: Copy systemd timer
+  template:
+    src: timer
+    dest: /etc/systemd/system/borg-backup.timer
+  tags:
+    - client
+    - service
+
+
+- name: Copy service
+  template:
+    src: service
+    dest: /etc/systemd/system/borg-backup.service
+  tags:
+    - client
+    - service
+
+
+- name: Enable service
+  ansible.builtin.systemd_service:
+    name: borg-backup.timer
+    enabled: true
+    state: started
+  tags:
+    - client
+    - service

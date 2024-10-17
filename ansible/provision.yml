@@ -1,0 +1,24 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+
+  roles:
+    - prepare
+
+- hosts: server
+  become: true
+  gather_facts: true
+
+  roles:
+    - server
+
+
+- hosts: client
+  become: true
+  gather_facts: true
+
+  roles:
+    - client
+
+
